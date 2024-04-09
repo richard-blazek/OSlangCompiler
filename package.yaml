@@ -1,0 +1,30 @@
+name:                OSlangCompiler
+version:             0.1.0.0
+license:             ISC
+author:              "Richard Blažek"
+maintainer:          "moi@richardblazek.com"
+copyright:           "2024 Richard Blažek"
+
+extra-source-files:
+- README.md
+
+description:         O'Slang compiler
+
+dependencies:
+- base >= 4.18 && < 5
+- containers >= 0.6.2.1
+- mtl >= 2.2.2
+
+library:
+  source-dirs: src
+
+executables:
+  oslang-compiler:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - OSlangCompiler
