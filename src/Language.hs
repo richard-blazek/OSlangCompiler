@@ -1,6 +1,6 @@
 module Language (Type (..), isType, isInstantiable, isBuiltin, access, value, function, operator) where
 
-import Data.Map (Map, (!))
+import Data.Map.Strict (Map, (!))
 
 data Type
   = Void
@@ -12,7 +12,7 @@ data Type
   | Pointer Type
   | Function [Type] Type
   | Record String (Map String Type)
-  | Type Type deriving (Show, Eq)
+  | Type Type deriving (Show, Eq, Ord)
 
 isType :: Type -> Bool
 isType (Type t) = True
@@ -29,12 +29,12 @@ access name (Record _ fields) = fields ! name
 access name (Pointer (Record _ fields)) = Pointer (fields ! name)
 
 value :: String -> Type
-value "Void" = Void
-value "Bool" = Void
-value "I8" = Int8
-value "I16" = Int16
-value "I32" = Int32
-value "I64" = Int64
+value "Void" = Type Void
+value "Bool" = Type Bool
+value "I8" = Type Int8
+value "I16" = Type Int16
+value "I32" = Type Int32
+value "I64" = Type Int64
 
 function :: String -> [Type] -> Type
 function fn args = case (fn, args) of
