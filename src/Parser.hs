@@ -1,8 +1,8 @@
-module Parser (Value (..), Declaration (..), Mutability (..), Visibility (..), File (..), parse) where
+module Parser (Value (..), Declaration (..), Mutability (..), Visibility (..), File, parse) where
 
 import Lexer
 
-data File = File [Declaration] deriving (Show, Eq, Ord)
+type File = [Declaration]
 data Visibility = Private | Public deriving (Show, Eq, Ord)
 data Mutability = Mutable | Constant deriving (Show, Eq, Ord)
 
@@ -122,7 +122,7 @@ parseDeclaration (Word "private" : tokens) = parseNewDecl Private tokens
 parseDeclaration tokens = parseNewDecl Public tokens
 
 parseFile :: [Declaration] -> [Token] -> File
-parseFile declarations [] = File declarations
+parseFile declarations [] = declarations
 parseFile declarations tokens = let (decl, rest) = parseDeclaration tokens in parseFile (decl : declarations) rest
 
 parse :: String -> File
