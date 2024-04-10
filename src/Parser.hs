@@ -1,9 +1,8 @@
-module Parser (Value (..), parse) where
+module Parser (Value (..), Declaration (..), Mutability (..), Visibility (..), File (..), parse) where
 
 import Lexer
 
 data File = File [Declaration] deriving (Show, Eq, Ord)
-
 data Visibility = Private | Public deriving (Show, Eq, Ord)
 data Mutability = Mutable | Constant deriving (Show, Eq, Ord)
 
