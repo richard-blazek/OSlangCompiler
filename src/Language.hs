@@ -71,5 +71,6 @@ operator op args = case (op, args) of
   (">", [t, u]) -> operator "<" [t, u]
   ("<=", [t, u]) -> operator "<" [t, u]
   (">=", [t, u]) -> operator "<" [t, u]
+  ("<-", [Pointer t, u]) | t == u -> Void
   where integer = [Int8, Int16, Int32, Int64]
         logical = [Int8, Int16, Int32, Int64, Bool]

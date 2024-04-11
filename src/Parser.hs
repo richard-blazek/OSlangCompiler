@@ -18,7 +18,7 @@ data Value
   | Name String
   | Access Value String
   | Operation String [Value]
-  | Assignment Value Value
+  | Local Mutability String Value
   | Function [(String, Value)] Value deriving (Show, Eq, Ord)
 
 parseFactor :: [Token] -> (Value, [Token])
@@ -29,6 +29,8 @@ parseFactor (Word "false" : tokens) = (Bool False, tokens)
 parseFactor (Word "fun" : tokens) = parseFunction tokens
 parseFactor (Word "if" : tokens) = parseIf tokens
 parseFactor (Word "while" : tokens) = parseWhile tokens
+parseFactor (Word "let" : Word name : Word "<-" : tokens) = let (value, rest) = parseValue tokens in (Local Mutable name value, rest)
+parseFactor (Word "def" : Word name : Word "<-" : tokens) = let (value, rest) = parseValue tokens in (Local Constant name value, rest)
 parseFactor (Word name : tokens) = (Name name, tokens)
 parseFactor (Operator "(" : tokens) = let (val, Operator ")" : rest) = parseValue tokens in (val, rest)
 
@@ -106,23 +108,23 @@ parseCmp = parseStep Nothing . parseAdd
         parseStep _ (val, tokens) = (val, tokens)
 
 parseValue :: [Token] -> (Value, [Token])
-parseValue = parseAsgn . parseCmp
-  where parseAsgn (left, Operator "<-" : tokens) = let (right, rest) = parseValue tokens in (Assignment left right, rest)
-        parseAsgn (left, tokens) = (left, tokens)
+parseValue = parseNext ["<-"] parseCmp . parseCmp
 
-parseNewDecl :: Visibility -> [Token] -> (Declaration, [Token])
-parseNewDecl v (Word "record" : Word name : tokens) = let (field, rest) = parseArgList tokens in (Record v name field, rest)
-parseNewDecl v (Word name : Operator "<-" : tokens) = let (value, rest) = parseValue tokens in (Global v Mutable name value, rest)
-parseNewDecl v (Word name : Operator "==" : tokens) = let (value, rest) = parseValue tokens in (Global v Constant name value, rest)
+finishDecl :: ([Token] -> (a, [Token])) -> (a -> Declaration) -> [Token] -> (Declaration, [Token])
+finishDecl parseParam toDecl tokens = let (param, rest) = parseParam tokens in (toDecl param, rest)
 
-parseDeclaration :: [Token] -> (Declaration, [Token])
-parseDeclaration (Word "import" : Text path : tokens) = (Import path, tokens)
-parseDeclaration (Word "private" : tokens) = parseNewDecl Private tokens
-parseDeclaration tokens = parseNewDecl Public tokens
+parseDecl :: [Token] -> (Declaration, [Token])
+parseDecl (Word "import" : Text path : tokens) = (Import path, tokens)
+parseDecl (Word "private" : Word "record" : Word name : tokens) = finishDecl parseArgList (Record Private name) tokens
+parseDecl (Word "private" : Word "var" : Word name : Operator "<-" : tokens) = finishDecl parseValue (Global Private Mutable name) tokens
+parseDecl (Word "private" : Word "def" : Word name : Operator "<-" : tokens) = finishDecl parseValue (Global Private Constant name) tokens
+parseDecl (Word "record" : Word name : tokens) = finishDecl parseArgList (Record Public name) tokens
+parseDecl (Word "var" : Word name : Operator "<-" : tokens) = finishDecl parseValue (Global Public Mutable name) tokens
+parseDecl (Word "def" : Word name : Operator "<-" : tokens) = finishDecl parseValue (Global Public Constant name) tokens
 
 parseFile :: [Declaration] -> [Token] -> File
 parseFile declarations [] = declarations
-parseFile declarations tokens = let (decl, rest) = parseDeclaration tokens in parseFile (decl : declarations) rest
+parseFile declarations tokens = let (decl, rest) = parseDecl tokens in parseFile (decl : declarations) rest
 
 parse :: String -> File
 parse = parseFile [] . tokenise
