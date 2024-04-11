@@ -47,6 +47,7 @@ operator op args = case (op, args) of
   ("while", [Bool, t]) -> Void
   ("[]", (Function args result : rest)) | args == rest -> result
   ("$", [Pointer t]) -> t
+  (";", args) -> if null args then Void else last args
   ("~", [x]) | x `elem` integer -> x
   ("!", [x]) | x `elem` logical -> x
   ("+", [Pointer t, u]) | u `elem` integer -> Pointer t
@@ -57,6 +58,8 @@ operator op args = case (op, args) of
   ("*", [t, u]) | t == u && t `elem` integer -> t
   ("/", [t, u]) | t == u && t `elem` integer -> t
   ("%", [t, u]) | t == u && t `elem` integer -> t
+  ("<<", [t, u]) | t == u && t `elem` integer -> t
+  (">>", [t, u]) | t == u && t `elem` integer -> t
   ("&", [Pointer t, u]) | t == u && t `elem` logical -> t
   ("&", [t, u]) | t == u && t `elem` logical -> t
   ("|", [t, u]) | t == u && t `elem` logical -> t

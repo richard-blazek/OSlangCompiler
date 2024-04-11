@@ -17,7 +17,6 @@ data Value
   | Bool Bool
   | Name String
   | Access Value String
-  | Block [Value]
   | Operation String [Value]
   | Assignment Value Value
   | Function [(String, Value)] Value deriving (Show, Eq, Ord)
@@ -38,7 +37,7 @@ expect token (first : tokens) | first == token = tokens
 
 parseBlock :: [Token] -> (Value, [Token])
 parseBlock = parse []
-  where parse statements tokens@(Word kw : _) | kw `elem` ["end", "else", "elif"] = (Block (reverse statements), tokens)
+  where parse statements tokens@(Word kw : _) | kw `elem` ["end", "else", "elif"] = (Operation ";" (reverse statements), tokens)
         parse statements tokens = let (st, rest) = parseValue tokens in parse (st : statements) rest
 
 parseList :: ([Token] -> (a, [Token])) -> [Token] -> ([a], [Token])
@@ -60,7 +59,7 @@ parseFunction tokens = (Function arguments block, tokens3)
 
 parseIf :: [Token] -> (Value, [Token])
 parseIf tokens
-  | end == "end" = (Operation "if" [cond, block, Block []], tokens3)
+  | end == "end" = (Operation "if" [cond, block, Operation ";" []], tokens3)
   | end == "elif" = let (alt, tokens4) = parseIf tokens3 in (Operation "if" [cond, block, alt], tokens4)
   | end == "else" = let (alt, tokens4) = parseBlock tokens3 in (Operation "if" [cond, block, alt], tokens4)
   where (cond, tokens2) = parseValue tokens
