@@ -36,10 +36,21 @@ value "I16" = Type Int16
 value "I32" = Type Int32
 value "I64" = Type Int64
 
+isInteger :: Type -> Bool
+isInteger = (`elem` [Int8, Int16, Int32, Int64])
+
+isLogical :: Type -> Bool
+isLogical = (`elem` [Int8, Int16, Int32, Int64, Bool])
+
+isIntegral :: Type -> Bool
+isIntegral (Pointer _) = True
+isIntegral t = isLogical t
+
 function :: String -> [Type] -> Type
 function fn args = case (fn, args) of
   ("Fun", args) -> let types = map (\(Type t) -> t) args in Type (Function (init args) (last args))
   ("Ptr", [Type t]) -> Type (Pointer t)
+  ("cast", [Type t, u]) | isIntegral t && isIntegral u -> t
 
 operator :: String -> [Type] -> Type
 operator op args = case (op, args) of
@@ -47,30 +58,27 @@ operator op args = case (op, args) of
   ("while", [Bool, t]) -> Void
   ("[]", (Function args result : rest)) | args == rest -> result
   ("$", [Pointer t]) -> t
-  (";", args) -> if null args then Void else last args
-  ("~", [x]) | x `elem` integer -> x
-  ("!", [x]) | x `elem` logical -> x
-  ("+", [Pointer t, u]) | u `elem` integer -> Pointer t
-  ("+", [t, u]) | t == u && t `elem` integer -> t
+  (";", []) -> Void
+  (";", args) -> last args
+  ("~", [x]) | isInteger x -> x
+  ("!", [x]) | isLogical x -> x
+  ("+", [Pointer t, u]) | isInteger u -> Pointer t
+  ("+", [t, u]) | t == u && isInteger t -> t
   ("-", [Pointer t, Pointer u]) | t == u -> Pointer t
-  ("-", [Pointer t, u]) | u `elem` integer -> Pointer t
-  ("-", [t, u]) | t == u && t `elem` integer -> t
-  ("*", [t, u]) | t == u && t `elem` integer -> t
-  ("/", [t, u]) | t == u && t `elem` integer -> t
-  ("%", [t, u]) | t == u && t `elem` integer -> t
-  ("<<", [t, u]) | t == u && t `elem` integer -> t
-  (">>", [t, u]) | t == u && t `elem` integer -> t
-  ("&", [Pointer t, u]) | t == u && t `elem` logical -> t
-  ("&", [t, u]) | t == u && t `elem` logical -> t
-  ("|", [t, u]) | t == u && t `elem` logical -> t
-  ("^", [t, u]) | t == u && t `elem` logical -> t
+  ("-", [Pointer t, u]) | isInteger u -> Pointer t
+  ("-", [t, u]) | t == u && isInteger t -> t
+  ("*", [t, u]) | t == u && isInteger t -> t
+  ("/", [t, u]) | t == u && isInteger t -> t
+  ("%", [t, u]) | t == u && isInteger t -> t
+  ("<<", [t, u]) | t == u && isInteger t -> t
+  (">>", [t, u]) | t == u && isInteger t -> t
+  ("&", [t, u]) | t == u && isLogical t -> t
+  ("|", [t, u]) | t == u && isLogical t -> t
+  ("^", [t, u]) | t == u && isLogical t -> t
   ("==", [t, u]) | t == u -> Bool
   ("!=", [t, u]) | t == u -> Bool
-  ("<", [t, u]) | t == u && t `elem` integer -> Bool
-  ("<", [Pointer t, Pointer u]) | t == u -> Bool
-  (">", [t, u]) -> operator "<" [t, u]
-  ("<=", [t, u]) -> operator "<" [t, u]
-  (">=", [t, u]) -> operator "<" [t, u]
+  ("<", [t, u]) | t == u && isIntegral t -> Bool
+  (">", [t, u]) | t == u && isIntegral t -> Bool
+  ("<=", [t, u]) | t == u && isIntegral t -> Bool
+  (">=", [t, u]) | t == u && isIntegral t -> Bool
   ("<-", [Pointer t, u]) | t == u -> Void
-  where integer = [Int8, Int16, Int32, Int64]
-        logical = [Int8, Int16, Int32, Int64, Bool]
