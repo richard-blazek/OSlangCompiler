@@ -1,7 +1,7 @@
 module Scope (Scope, empty, include, get, addPublic, addPrivate) where
 
 import qualified Data.Map.Strict as Map
-import Language (Type)
+import Typing (Type)
 
 data Entry = Public Type | Private Type deriving (Show, Eq, Ord)
 data Scope = Scope (Map.Map String Entry) deriving (Show, Eq, Ord)

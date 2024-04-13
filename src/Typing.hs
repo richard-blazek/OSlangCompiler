@@ -1,4 +1,4 @@
-module Language (Type (..), isType, isInstantiable, isBuiltin, access, value, function, operator) where
+module Typing (Type (..), isInstantiable, isBuiltin, access, value, function, operator) where
 
 import Data.Map.Strict (Map, (!))
 
@@ -14,12 +14,9 @@ data Type
   | Record String (Map String Type)
   | Type Type deriving (Show, Eq, Ord)
 
-isType :: Type -> Bool
-isType (Type t) = True
-isType _ = False
-
 isInstantiable :: Type -> Bool
-isInstantiable t = not (isType t) && t /= Void
+isInstantiable (Type t) = False
+isInstantiable t = t /= Void
 
 isBuiltin :: String -> Bool
 isBuiltin = (`elem` ["Void", "Bool", "I8", "I16", "I32", "I64", "Ptr", "Fun"])
@@ -58,8 +55,6 @@ operator op args = case (op, args) of
   ("while", [Bool, t]) -> Void
   ("[]", (Function args result : rest)) | args == rest -> result
   ("$", [Pointer t]) -> t
-  (";", []) -> Void
-  (";", args) -> last args
   ("~", [x]) | isInteger x -> x
   ("!", [x]) | isLogical x -> x
   ("+", [Pointer t, u]) | isInteger u -> Pointer t
