@@ -1,7 +1,7 @@
 module Scope (Scope, empty, include, get, addPublic, addPrivate) where
 
 import qualified Data.Map.Strict as Map
-import Typing (Type)
+import Typing (Type, globals)
 
 data Entry = Public Type | Private Type deriving (Show, Eq, Ord)
 data Scope = Scope (Map.Map String Entry) deriving (Show, Eq, Ord)
@@ -14,7 +14,7 @@ nameConflict :: v -> v -> t
 nameConflict _ _ = error "Name conflict"
 
 empty :: Scope
-empty = Scope Map.empty
+empty = Scope (Map.map Public globals)
 
 include :: Scope -> Scope -> Scope
 include (Scope other) (Scope this) = Scope union
